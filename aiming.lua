@@ -46,8 +46,6 @@ getgenv().Aiming = {
     
     HitChance = 110,
 
-    Resolver = false,
-
     Selected = nil,
     SelectedPart = nil,
 
@@ -435,22 +433,6 @@ Heartbeat:Connect(function()
     Aiming.UpdateFOV()
     Aiming.GetClosestPlayerToCursor()
 end)
-
-if getgenv().Aiming.Resolver == true then
-  local RunService = game:GetService("RunService")
-
-RunService.Heartbeat:Connect(function()
-    pcall(function()
-        for i,v in pairs(game.Players:GetChildren()) do
-            if v.Name ~= game.Players.LocalPlayer.Name then
-                local hrp = v.Character.HumanoidRootPart
-                hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)    
-                hrp.AssemblyLinearVelocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)   
-            end
-        end
-    end)
-end)
-            end
 
 -- //
 return Aiming
