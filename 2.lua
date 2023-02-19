@@ -1,3 +1,5 @@
+hookfunction(game.Players.LocalPlayer.IsInGroup, function() return true end)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Nosssa/NossLock/main/AntiAimViewer"))()
 local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/scripterhub/files/main/1.lua"))()
 local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/scripterhub/files/main/1.lua"))()
 
@@ -13,10 +15,7 @@ local RunService = game:GetService("RunService")
 
 local UserInputService = game:GetService("UserInputService")
 
-local PingStats = GetService.Stats.Network.ServerStatsItem["Data Ping"]:GetValueString()
-local Value = tostring(PingStats)
-local PingValue = Value:split(" ")
-local PingNumber = tonumber(PingValue[1])
+
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -30,24 +29,17 @@ local DaHoodSettings = {
     
     SilentAim = true,
 
-    Prediction = 0.14441,
+    AimLock = false,
+
+    Prediction = 0.1,
+
+    AimLockKeybind = Enum.KeyCode.E,
 
     Resolver = true,
     
 }
-
-
-
-
-
-
-
-
-
 --------------------------------------------------
-getgenv().DaHoodSettings = DaHoodSettings        
-getgenv().Aiming.FOV = 70
-getgenv().Aiming.ShowFOV = true
+getgenv().DaHoodSettings = DaHoodSettings                           
 --------------------------------------------------- -fov 5.5-6.6 is legit
 
 function Aiming.Check()
@@ -85,8 +77,6 @@ task.spawn(function()
             local oldVel = game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity
 
             game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity = Vector3.new(oldVel.X, -0, oldVel.Z)
-
-
 
         end 
 
@@ -176,3 +166,15 @@ end)
 
 
 
+RunService:BindToRenderStep("AimLock", 0, function()
+
+    if (DaHoodSettings.AimLock and Aiming.Check() and UserInputService:IsKeyDown(DaHoodSettings.AimLockKeybind)) then
+
+        local SelectedPart = Aiming.SelectedPart
+
+        local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+        CurrentCamera.CFrame = CFrame.lookAt(CurrentCamera.CFrame.Position, Hit.Position)
+
+    end
+end)
