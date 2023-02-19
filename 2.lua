@@ -68,21 +68,6 @@ end
 
 
 
-task.spawn(function()
-
-    while task.wait() do
-
-        if DaHoodSettings.Resolver and Aiming.Selected ~= nil and (Aiming.Selected.Character)  then
-
-            local oldVel = game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity
-
-            game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity = Vector3.new(oldVel.X, -0, oldVel.Z)
-
-        end 
-
-    end
-
-end)
 
 
 
@@ -138,43 +123,4 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
     end    
 
-end)
-
-local __index
-
-__index = hookmetamethod(game, "__index", function(t, k)
-
-    if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and Aiming.Check()) then
-
-        local SelectedPart = Aiming.SelectedPart
-
-        if (DaHoodSettings.SilentAim and (k == "Hit" or k == "Target")) then
-
-            local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
-
-            return (k == "Hit" and Hit or SelectedPart)
-
-        end
-
-    end
-
-
-
-    return __index(t, k)
-
-end)
-
-
-
-RunService:BindToRenderStep("AimLock", 0, function()
-
-    if (DaHoodSettings.AimLock and Aiming.Check() and UserInputService:IsKeyDown(DaHoodSettings.AimLockKeybind)) then
-
-        local SelectedPart = Aiming.SelectedPart
-
-        local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
-
-        CurrentCamera.CFrame = CFrame.lookAt(CurrentCamera.CFrame.Position, Hit.Position)
-
-    end
 end)
