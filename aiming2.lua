@@ -18,6 +18,22 @@
                             }
                             getgenv().DaHoodSettings = DaHoodSettings
                             
+local Workspace = game:GetService("Workspace")
+
+local Players = game:GetService("Players")
+
+local RunService = game:GetService("RunService")
+
+local UserInputService = game:GetService("UserInputService")
+
+
+
+local LocalPlayer = Players.LocalPlayer
+
+local Mouse = LocalPlayer:GetMouse()
+
+local CurrentCamera = Workspace.CurrentCamera
+
                             
                             function Aiming.Check()
                             -------------
@@ -40,22 +56,6 @@
                             end
                             
 
-local Workspace = game:GetService("Workspace")
-
-local Players = game:GetService("Players")
-
-local RunService = game:GetService("RunService")
-
-local UserInputService = game:GetService("UserInputService")
-
-
-
-local LocalPlayer = Players.LocalPlayer
-
-local Mouse = LocalPlayer:GetMouse()
-
-local CurrentCamera = Workspace.CurrentCamera
-
 --Resolver
 task.spawn(function()
 
@@ -72,24 +72,7 @@ task.spawn(function()
     end
 
 end)
-local CPlayer = Aiming.Selected
-local hrp = CPlayer.Character.HumanoidRootPart
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
 
-while wait() do
-    local velocity = humanoid.Velocity
-    local speed = velocity.magnitude
-    if speed < 0 then
-        velocity = Vector3.new(0, 0, 0)
-        humanoid.Velocity = velocity
-    end
-                hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Y, hrp.Velocity.Z)    
-                hrp.AssemblyLinearVelocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Y, hrp.Velocity.Z)
-    
-    
-end
                             -- // Hook
                             local __index
                             __index = hookmetamethod(game, "__index", function(t, k)
