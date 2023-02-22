@@ -18,21 +18,21 @@
                             }
                             getgenv().DaHoodSettings = DaHoodSettings
                             
-local Workspace = game:GetService("Workspace")
+                             local Workspace = game:GetService("Workspace")
 
-local Players = game:GetService("Players")
+                             local Players = game:GetService("Players")
 
-local RunService = game:GetService("RunService")
+                             local RunService = game:GetService("RunService")
 
-local UserInputService = game:GetService("UserInputService")
+                             local UserInputService = game:GetService("UserInputService")
 
 
 
-local LocalPlayer = Players.LocalPlayer
+                             local LocalPlayer = Players.LocalPlayer
 
-local Mouse = LocalPlayer:GetMouse()
+                             local Mouse = LocalPlayer:GetMouse()
 
-local CurrentCamera = Workspace.CurrentCamera
+                             local CurrentCamera = Workspace.CurrentCamera
 
                             
                             function Aiming.Check()
@@ -55,23 +55,21 @@ local CurrentCamera = Workspace.CurrentCamera
                                 return true
                             end
                             
+                             task.spawn(function()
+                             
+                                 while task.wait() do
 
---Resolver
-task.spawn(function()
+                                     if getgenv().Resolver and Aiming.Selected ~= nil and (Aiming.Selected.Character)  then
+                             
+                                         local oldVel = game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity
 
-    while task.wait() do
+                                         game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity = Vector3.new(oldVel.X, -0, oldVel.Z)
 
-        if getgenv().Resolver and Aiming.Selected ~= nil and (Aiming.Selected.Character)  then
+                                     end 
+                             
+                                 end
 
-            local oldVel = game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity
-
-            game.Players[Aiming.Selected.Name].Character.HumanoidRootPart.Velocity = Vector3.new(oldVel.X, -1, oldVel.Z)
-
-        end 
-
-    end
-
-end)
+                             end)
 
                             -- // Hook
                             local __index
