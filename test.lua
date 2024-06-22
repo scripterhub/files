@@ -1,79 +1,77 @@
 -- SimpleUILibrary ModuleScript
-
 local SimpleUILibrary = {}
 
--- Services
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+-- Function to create a new UI window
+function SimpleUILibrary:CreateWindow(config)
+    -- Configuration defaults
+    local config = config or {}
+    local shadowEnabled = config.Shadow or true
+    local backgroundColor = config.BackgroundColor or Color3.new(1, 1, 1)
+    local blurredBackground = config.BlurredBackground or false
+    local size = config.Size or UDim2.new(0, 300, 0, 200)
+    local topbarText = config.TopbarText or "Window"
+    local topbarFont = config.TopbarFont or Enum.Font.SourceSans
+    local topbarTextSize = config.TopbarTextSize or 14
 
--- Function to create a new UI element
-local function createUIElement(elementType, properties, parent)
-    local element = Instance.new(elementType)
-    for property, value in pairs(properties) do
-        element[property] = value
+    -- Create ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CustomWindow"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    -- Create main frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = size
+    mainFrame.Position = UDim2.new(0.5, -size.X.Offset / 2, 0.5, -size.Y.Offset / 2)
+    mainFrame.BackgroundColor3 = backgroundColor
+    mainFrame.BorderSizePixel = 0
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.Parent = screenGui
+
+    -- Create shadow
+    if shadowEnabled then
+        local shadow = Instance.new("ImageLabel")
+        shadow.Size = UDim2.new(1, 20, 1, 20)
+        shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+        shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+        shadow.Image = "rbxassetid://1316045217" -- Example shadow image
+        shadow.BackgroundTransparency = 1
+        shadow.ImageTransparency = 0.5
+        shadow.ZIndex = 0
+        shadow.Parent = mainFrame
     end
-    element.Parent = parent
-    return element
-end
 
--- Function to create the base window
-function SimpleUILibrary:CreateBaseWindow(config)
-    local screenGui = createUIElement("ScreenGui", {
-        ResetOnSpawn = false,
-    }, game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    -- Create topbar
+    local topbar = Instance.new("Frame")
+    topbar.Size = UDim2.new(1, 0, 0, 30)
+    topbar.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    topbar.BorderSizePixel = 0
+    topbar.Parent = mainFrame
 
-    local blurEffect = createUIElement("BlurEffect", {
-        Size = config.BlurSize or 24,
-    }, game.Lighting)
+    local topbarLabel = Instance.new("TextLabel")
+    topbarLabel.Size = UDim2.new(1, 0, 1, 0)
+    topbarLabel.BackgroundTransparency = 1
+    topbarLabel.Text = topbarText
+    topbarLabel.Font = topbarFont
+    topbarLabel.TextSize = topbarTextSize
+    topbarLabel.TextColor3 = Color3.new(1, 1, 1)
+    topbarLabel.Parent = topbar
 
-    local baseFrame = createUIElement("Frame", {
-        Size = config.Size or UDim2.new(0, 400, 0, 300),
-        BackgroundColor3 = config.BackgroundColor or Color3.fromRGB(255, 255, 255),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BorderSizePixel = 0,
-        BackgroundTransparency = 0.3,
-    }, screenGui)
-
-    local shadow = createUIElement("ImageLabel", {
-        Size = UDim2.new(1, 24, 1, 24),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Image = "rbxassetid://1316045217", -- Shadow asset
-        ImageTransparency = 0.5,
-        BackgroundTransparency = 1,
-    }, baseFrame)
-
-    local topBar = createUIElement("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-        BorderSizePixel = 0,
-    }, baseFrame)
-
-    local topBarText = createUIElement("TextLabel", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = config.TopBarText or "Base Window",
-        Font = config.TopBarFont or Enum.Font.SourceSans,
-        TextSize = config.TopBarTextSize or 24,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-    }, topBar)
-
-    -- Draggable functionality for topBar
-    local dragging, dragInput, dragStart, startPos
+    -- Enable dragging of the window
+    local UIS = game:GetService("UserInputService")
+    local dragging = false
+    local dragInput, mousePos, framePos
 
     local function update(input)
-        local delta = input.Position - dragStart
-        baseFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local delta = input.Position - mousePos
+        mainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
     end
 
-    topBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    topbar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            dragStart = input.Position
-            startPos = baseFrame.Position
-            
+            mousePos = input.Position
+            framePos = mainFrame.Position
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -82,34 +80,46 @@ function SimpleUILibrary:CreateBaseWindow(config)
         end
     end)
 
-    topBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    topbar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
+    UIS.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             update(input)
         end
     end)
 
-    return screenGui, baseFrame
+    -- Apply blurred background if needed
+    if blurredBackground then
+        local blurEffect = Instance.new("BlurEffect")
+        blurEffect.Size = 10
+        blurEffect.Parent = game.Lighting
+    end
+
+    return screenGui, mainFrame
 end
 
--- Function to create the AddScript button
-function SimpleUILibrary:AddScriptButton(parent, config)
-    local button = createUIElement("ImageButton", {
-        Size = config.Size or UDim2.new(0, 50, 0, 50),
-        Image = config.Image or "rbxassetid://0", -- Default image
-        BackgroundTransparency = 1,
-    }, parent)
+-- Function to add a script button
+function SimpleUILibrary:AddScriptButton(window, config)
+    -- Configuration defaults
+    local config = config or {}
+    local buttonImage = config.ButtonImage or "rbxassetid://3570695787"
+    local onClick = config.OnClick or function() end
+
+    -- Create button
+    local button = Instance.new("ImageButton")
+    button.Size = UDim2.new(0, 50, 0, 50)
+    button.Image = buttonImage
+    button.BackgroundTransparency = 1
+    button.Parent = window
 
     button.MouseButton1Click:Connect(function()
-        parent:Destroy()
+        onClick()
+        window:Destroy()
     end)
-
-    return button
 end
 
 return SimpleUILibrary
