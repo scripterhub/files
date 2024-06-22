@@ -1,124 +1,115 @@
--- UI Library Module
-local UILibrary = {}
+local UIService = {}
+UIService.__index = UIService
 
 local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local BlurEffect = Instance.new("BlurEffect")
+BlurEffect.Size = 0
+BlurEffect.Parent = game.Lighting
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+local function createDraggableWindow(config)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.IgnoreGuiInset = true
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Function to create the main window
-function UILibrary:CreateWindow(config)
-    local screenGui = Instance.new("ScreenGui", playerGui)
-    screenGui.Name = "CustomUI"
-    
-    local blurEffect = Instance.new("BlurEffect")
-    blurEffect.Parent = game.Lighting
-    blurEffect.Size = 0
-    
-    local window = Instance.new("Frame", screenGui)
-    window.Name = "MainWindow"
-    window.Size = config.Size or UDim2.new(0, 400, 0, 300)
-    window.BackgroundColor3 = config.BackgroundColor or Color3.fromRGB(30, 30, 30)
-    window.BorderSizePixel = 0
-    window.Position = UDim2.new(0.5, -200, 0.5, -150)
-    window.AnchorPoint = Vector2.new(0.5, 0.5)
-    
-    local shadow = Instance.new("ImageLabel", window)
-    shadow.Name = "Shadow"
-    shadow.Size = UDim2.new(1, 20, 1, 20)
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.5
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    
-    local topBar = Instance.new("Frame", window)
-    topBar.Name = "TopBar"
-    topBar.Size = UDim2.new(1, 0, 0, 40)
-    topBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    topBar.BorderSizePixel = 0
-    
-    local topBarLabel = Instance.new("TextLabel", topBar)
-    topBarLabel.Name = "Title"
-    topBarLabel.Size = UDim2.new(1, -10, 1, -10)
-    topBarLabel.Position = UDim2.new(0, 5, 0, 5)
-    topBarLabel.BackgroundTransparency = 1
-    topBarLabel.Text = config.Title or "Title"
-    topBarLabel.Font = config.TitleFont or Enum.Font.SourceSans
-    topBarLabel.TextSize = config.TitleSize or 24
-    topBarLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    topBarLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local blurTweenIn = TweenService:Create(BlurEffect, TweenInfo.new(0.5), {Size = 15})
+    blurTweenIn:Play()
 
-    -- Function to make the window draggable
-    local function makeDraggable(frame, handle)
-        local dragging = false
-        local dragInput, mousePos, framePos
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = config.Size or UDim2.new(0.3, 0, 0.4, 0)
+    mainFrame.Position = UDim2.new(0.35, 0, 0.3, 0)
+    mainFrame.BackgroundColor3 = config.BackgroundColor or Color3.fromRGB(255, 255, 255)
+    mainFrame.BackgroundTransparency = config.BackgroundTransparency or 0.5
+    mainFrame.Parent = screenGui
 
-        handle.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                mousePos = input.Position
-                framePos = frame.Position
-
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        handle.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                dragInput = input
-            end
-        end)
-
-        RunService.Heartbeat:Connect(function()
-            if dragging then
-                local delta = game:GetService("UserInputService"):GetMouseLocation() - mousePos
-                frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-            end
-        end)
+    if config.Shadow then
+        local shadow = Instance.new("ImageLabel")
+        shadow.Size = UDim2.new(1, 10, 1, 10)
+        shadow.Position = UDim2.new(0, -5, 0, -5)
+        shadow.Image = "rbxassetid://1316045217"
+        shadow.ImageTransparency = 0.5
+        shadow.ScaleType = Enum.ScaleType.Slice
+        shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+        shadow.Parent = mainFrame
     end
 
-    makeDraggable(window, topBar)
+    local topBar = Instance.new("Frame")
+    topBar.Size = UDim2.new(1, 0, 0, 50)
+    topBar.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    topBar.Parent = mainFrame
 
-    -- Blur in animation
-    local blurTween = TweenService:Create(blurEffect, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 10})
-    blurTween:Play()
+    local topBarText = Instance.new("TextLabel")
+    topBarText.Text = config.TopBarText or "Window"
+    topBarText.Font = config.TopBarFont or Enum.Font.SourceSans
+    topBarText.TextSize = config.TopBarTextSize or 24
+    topBarText.Size = UDim2.new(1, 0, 1, 0)
+    topBarText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    topBarText.BackgroundTransparency = 1
+    topBarText.Parent = topBar
 
-    return window
-end
+    local isDragging = false
+    local dragStart
+    local startPos
 
--- Function to add an AddScript button
-function UILibrary:AddScript(parent, config)
-    local button = Instance.new("ImageButton", parent)
-    button.Name = "AddScriptButton"
-    button.Size = UDim2.new(0, 100, 0, 100)
-    button.BackgroundTransparency = 1
-    button.Image = config.Image or "rbxassetid://1234567890"
-    button.Position = config.Position or UDim2.new(0, 0, 0, 0)
+    local function update(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
 
-    button.MouseButton1Click:Connect(function()
-        -- Destroy UI and unblur the screen
-        local blurEffect = game.Lighting:FindFirstChildOfClass("BlurEffect")
-        if blurEffect then
-            local blurOutTween = TweenService:Create(blurEffect, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0})
-            blurOutTween:Play()
-            blurOutTween.Completed:Connect(function()
-                blurEffect:Destroy()
+    topBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    isDragging = false
+                end
             end)
         end
-        parent.Parent:Destroy()
+    end)
+
+    topBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if isDragging then
+                update(input)
+            end
+        end
+    end)
+
+    return screenGui, mainFrame
+end
+
+local function createAddScriptButton(config, parent)
+    local button = Instance.new("ImageButton")
+    button.Size = UDim2.new(0, 100, 0, 100)
+    button.Image = config.Image or "rbxassetid://6031068420"
+    button.Parent = parent
+
+    button.MouseButton1Click:Connect(function()
+        local blurTweenOut = TweenService:Create(BlurEffect, TweenInfo.new(0.5), {Size = 0})
+        blurTweenOut:Play()
+
+        blurTweenOut.Completed:Connect(function()
+            parent:Destroy()
+            BlurEffect:Destroy()
+        end)
     end)
     
     return button
 end
 
-return UILibrary
+function UIService.new(config)
+    local self = setmetatable({}, UIService)
+    self.screenGui, self.mainFrame = createDraggableWindow(config)
+    self.buttons = {}
+    return self
+end
+
+function UIService:AddScript(config)
+    local button = createAddScriptButton(config, self.mainFrame)
+    table.insert(self.buttons, button)
+    return button
+end
+
+return UIService
