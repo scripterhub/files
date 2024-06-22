@@ -1,76 +1,54 @@
--- SimpleUILibrary ModuleScript
-local SimpleUILibrary = {}
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local BlurEffect = Instance.new("BlurEffect", game.Lighting)
+BlurEffect.Size = 0 -- Initial blur size
 
--- Function to create a new UI window
-function SimpleUILibrary:CreateWindow(config)
-    -- Configuration defaults
-    local config = config or {}
-    local shadowEnabled = config.Shadow or true
-    local backgroundColor = config.BackgroundColor or Color3.new(1, 1, 1)
-    local blurredBackground = config.BlurredBackground or false
-    local size = config.Size or UDim2.new(0, 300, 0, 200)
-    local topbarText = config.TopbarText or "Window"
-    local topbarFont = config.TopbarFont or Enum.Font.SourceSans
-    local topbarTextSize = config.TopbarTextSize or 14
+local UILibrary = {}
 
-    -- Create ScreenGui
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "CustomWindow"
-    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+function UILibrary:CreateWindow(config)
+    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    local BaseFrame = Instance.new("Frame", ScreenGui)
+    local TopBar = Instance.new("Frame", BaseFrame)
+    local Title = Instance.new("TextLabel", TopBar)
+    local UIShadow = Instance.new("ImageLabel", BaseFrame)
 
-    -- Create main frame
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = size
-    mainFrame.Position = UDim2.new(0.5, -size.X.Offset / 2, 0.5, -size.Y.Offset / 2)
-    mainFrame.BackgroundColor3 = backgroundColor
-    mainFrame.BorderSizePixel = 0
-    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.Parent = screenGui
+    -- Configure BaseFrame
+    BaseFrame.Size = config.Size or UDim2.new(0, 400, 0, 300)
+    BaseFrame.Position = UDim2.new(0.5, -BaseFrame.Size.X.Offset / 2, 0.5, -BaseFrame.Size.Y.Offset / 2)
+    BaseFrame.BackgroundTransparency = 0.1
+    BaseFrame.BackgroundColor3 = config.BackgroundColor or Color3.fromRGB(255, 255, 255)
+    BaseFrame.ClipsDescendants = true
 
-    -- Create shadow
-    if shadowEnabled then
-        local shadow = Instance.new("ImageLabel")
-        shadow.Size = UDim2.new(1, 20, 1, 20)
-        shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-        shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-        shadow.Image = "rbxassetid://1316045217" -- Example shadow image
-        shadow.BackgroundTransparency = 1
-        shadow.ImageTransparency = 0.5
-        shadow.ZIndex = 0
-        shadow.Parent = mainFrame
-    end
+    -- Add Shadow
+    UIShadow.Size = UDim2.new(1, 10, 1, 10)
+    UIShadow.Position = UDim2.new(0, -5, 0, -5)
+    UIShadow.Image = "rbxassetid://1316045217"
+    UIShadow.ImageColor3 = Color3.new(0, 0, 0)
+    UIShadow.ImageTransparency = 0.5
+    UIShadow.ScaleType = Enum.ScaleType.Slice
+    UIShadow.SliceCenter = Rect.new(10, 10, 118, 118)
 
-    -- Create topbar
-    local topbar = Instance.new("Frame")
-    topbar.Size = UDim2.new(1, 0, 0, 30)
-    topbar.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-    topbar.BorderSizePixel = 0
-    topbar.Parent = mainFrame
+    -- Configure TopBar
+    TopBar.Size = UDim2.new(1, 0, 0, 30)
+    TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TopBar.BorderSizePixel = 0
 
-    local topbarLabel = Instance.new("TextLabel")
-    topbarLabel.Size = UDim2.new(1, 0, 1, 0)
-    topbarLabel.BackgroundTransparency = 1
-    topbarLabel.Text = topbarText
-    topbarLabel.Font = topbarFont
-    topbarLabel.TextSize = topbarTextSize
-    topbarLabel.TextColor3 = Color3.new(1, 1, 1)
-    topbarLabel.Parent = topbar
+    -- Configure Title
+    Title.Size = UDim2.new(1, 0, 1, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = config.TopBarText or "Title"
+    Title.Font = config.TopBarFont or Enum.Font.SourceSans
+    Title.TextSize = config.TopBarTextSize or 20
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-    -- Enable dragging of the window
-    local UIS = game:GetService("UserInputService")
-    local dragging = false
-    local dragInput, mousePos, framePos
-
-    local function update(input)
-        local delta = input.Position - mousePos
-        mainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-    end
-
-    topbar.InputBegan:Connect(function(input)
+    -- Enable Draggable Top Bar
+    local dragging, dragInput, dragStart, startPos
+    TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            mousePos = input.Position
-            framePos = mainFrame.Position
+            dragStart = input.Position
+            startPos = BaseFrame.Position
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -80,7 +58,7 @@ function SimpleUILibrary:CreateWindow(config)
         end
     end)
 
-    topbar.InputChanged:Connect(function(input)
+    TopBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
@@ -88,38 +66,30 @@ function SimpleUILibrary:CreateWindow(config)
 
     UIS.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            update(input)
+            local delta = input.Position - dragStart
+            BaseFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 
-    -- Apply blurred background if needed
-    if blurredBackground then
-        local blurEffect = Instance.new("BlurEffect")
-        blurEffect.Size = 10
-        blurEffect.Parent = game.Lighting
+    -- Configure Blurred Background
+    if config.BlurredBackground then
+        BlurEffect.Size = 10
     end
 
-    return screenGui, mainFrame
+    -- Add AddScript Button Function
+    function UILibrary:AddScriptButton(imageId, callback)
+        local Button = Instance.new("ImageButton", BaseFrame)
+        Button.Size = UDim2.new(0, 50, 0, 50)
+        Button.Image = imageId
+        Button.Position = UDim2.new(0, #BaseFrame:GetChildren() * 60, 0, 50)
+
+        Button.MouseButton1Click:Connect(function()
+            if callback then callback() end
+            ScreenGui:Destroy() -- Destroy UI after selecting button
+        end)
+    end
+
+    return UILibrary
 end
 
--- Function to add a script button
-function SimpleUILibrary:AddScriptButton(window, config)
-    -- Configuration defaults
-    local config = config or {}
-    local buttonImage = config.ButtonImage or "rbxassetid://3570695787"
-    local onClick = config.OnClick or function() end
-
-    -- Create button
-    local button = Instance.new("ImageButton")
-    button.Size = UDim2.new(0, 50, 0, 50)
-    button.Image = buttonImage
-    button.BackgroundTransparency = 1
-    button.Parent = window
-
-    button.MouseButton1Click:Connect(function()
-        onClick()
-        window:Destroy()
-    end)
-end
-
-return SimpleUILibrary
+return UILibrary
